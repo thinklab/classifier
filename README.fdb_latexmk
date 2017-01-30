@@ -1,0 +1,10 @@
+# Fdb version 3
+["pdflatex"] 1481896041 "README.tex" "README.pdf" "README" 1481896041
+  "/usr/share/texlive/texmf-dist/tex/latex/base/bk10.clo" 1254151887 8882 41e4149a0e29b927a7d5a0e13d2ebab4 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/book.cls" 1254151887 23695 94c3d869be52f7302728a4358b7372c2 ""
+  "README.aux" 1481896041 284 1bcc064f8bba8027ccadf923fb891f78 ""
+  "README.tex" 1481896036 326 12c113decf43ade2428910529f36a29a ""
+  (generated)
+  "README.aux"
+  "README.pdf"
+  "README.log"
