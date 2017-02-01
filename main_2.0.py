@@ -134,7 +134,8 @@ def main():
     np.seterr(invalid='ignore')
     from numpy import genfromtxt
     train_data = genfromtxt('training.csv', delimiter = ',')
-    test_data = genfromtxt('test.csv', delimiter = ',')
+    #test_data = genfromtxt('test.csv', delimiter = ',')
+    test_data = genfromtxt('german_credit.csv', delimiter = ',')
     correct_answers = np.array(train_data[:, 1]) 
     cases = np.delete(train_data, 0, 1)    
     cases = np.delete(cases, 0, 1) 
