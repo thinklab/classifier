@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import bigfloat as bfl
 
 ## ----------------------------------------------------------------------------
 #                          Quality measurement
@@ -59,8 +60,10 @@ def weighter(cases, correct_answers):
        return: [nfeatures]
     """
     weights = np.random.normal(0, 1, [cases.shape[1]])
-    for i in range(10000):
+    #print(weights)
+    for i in range(10):
         weights = weights_betterizer(cases, correct_answers, weights)
+        print(weights)
     return weights
 
 def weights_betterizer(cases, correct_answers, weights):
@@ -70,6 +73,7 @@ def weights_betterizer(cases, correct_answers, weights):
        return weights: [nfeatures]
     """
     function_for_action_grad = get_pseudo_accuracy_grad(cases, correct_answers, weights)
+    print(function_for_action_grad)
     return weights + 0.01 * function_for_action_grad
 
 def get_pseudo_accuracy(cases, correct_answers, weights):
@@ -119,16 +123,22 @@ def make_grad_fn(fn):
 #                                   Main
 
 def main():
+    np.seterr(invalid='ignore')
     from numpy import genfromtxt
     train_data = genfromtxt('training.csv', delimiter = ',')
     test_data = genfromtxt('test.csv', delimiter = ',')
-    cases = np.delete(train_data, 1, 1)    
-    #print(cases)
     correct_answers = np.array(train_data[:, 1]) 
+    cases = np.delete(train_data, 0, 1)    
+    cases = np.delete(cases, 0, 1) 
+    cases = np.delete(cases, 4, 1)
+    print(cases)    
     #print(correct_answers)
-    new_cases = np.delete(test_data, 1, 1)
+    new_cases = np.delete(test_data, 0, 1)
+    new_cases = np.delete(new_cases, 0, 1)
+    new_cases = np.delete(new_cases, 4, 1)
+    print(new_cases)
     classifier = machine_learning(cases, correct_answers)
     classifier_answers = classifier(new_cases)
-
+    print(classifier_answers)
 if __name__ == '__main__':
     main()
