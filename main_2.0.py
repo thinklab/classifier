@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import bigfloat as bfl
+import matplotlib.pyplot as plt
 
 ## ----------------------------------------------------------------------------
 #                          Quality measurement
@@ -62,6 +62,7 @@ def weighter(cases, correct_answers):
     """
     weights = np.random.normal(0, 1, [cases.shape[1]])
     #print(weights)
+    plt.ion()
     for i in range(1000):
         weights = weights_betterizer(cases, correct_answers, weights)
         predicted_answers = classifier(cases, weights)
@@ -70,6 +71,8 @@ def weighter(cases, correct_answers):
         print("prec - ", precision(predicted_answers, correct_answers))
         print("recall - ", recall(predicted_answers, correct_answers))
         print("weig_len - ", np.sqrt(np.sum(weights ** 2)))
+        plt.scatter(i, accuracy(predicted_answers, correct_answers), ro)
+        plt.pause(0.05)
     return weights
 
 def weights_betterizer(cases, correct_answers, weights):
@@ -131,20 +134,15 @@ def make_grad_fn(fn):
 #                                   Main
 
 def main():
-    np.seterr(invalid='ignore')
+    #np.seterr(invalid='ignore')
     from numpy import genfromtxt
-    train_data = genfromtxt('training.csv', delimiter = ',')
-    #test_data = genfromtxt('test.csv', delimiter = ',')
-    test_data = genfromtxt('german_credit.csv', delimiter = ',')
-    correct_answers = np.array(train_data[:, 1]) 
-    cases = np.delete(train_data, 0, 1)    
-    cases = np.delete(cases, 0, 1) 
-    cases = np.delete(cases, 4, 1)
-    #print(cases)    
+    train_data = genfromtxt('ccard_train.csv', delimiter = ',')
+    test_data = genfromtxt('ccard_test.csv', delimiter = ',')
+    correct_answers = np.array(train_data[:, -1:]) 
     #print(correct_answers)
-    new_cases = np.delete(test_data, 0, 1)
-    new_cases = np.delete(new_cases, 0, 1)
-    new_cases = np.delete(new_cases, 4, 1)
+    cases = np.array(train_data[:, 1:-1])    
+    print(cases)    
+    new_cases = np.array(test_data[:, 1:-1])
     #print(new_cases)
     classifier = machine_learning(cases, correct_answers)
     classifier_answers = classifier(new_cases)
