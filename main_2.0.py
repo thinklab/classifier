@@ -69,20 +69,28 @@ def weights_betterizer(cases, correct_answers, weights):
        weights: [nfeatures]
        return weights: [nfeatures]
     """
-    function_for_action = lambda w: get_pseudo_accuracy(cases, correct_answers, w)
-    function_for_action_grad = make_grad_fn(function_for_action)
-    return weights + 0.01 * function_for_action_grad(weights)
-
+    function_for_action_grad = get_pseudo_accuracy_grad(cases, correct_answers, weights)
+    return weights + 0.01 * function_for_action_grad
 
 def get_pseudo_accuracy(cases, correct_answers, weights):
     """cases: [ncases, nfeatures]
        correct_answers: [ncases]
-       weights: [weights]
-       return loss: []
+       weights: [nfeatures]
+       return pseudo_accuracy: []
     """
     scores = np.dot(cases, weights)
     margin = get_margin(scores, correct_answers)
     return np.mean(1 / (1 + np.exp(-margin)))
+
+def get_pseudo_accuracy_grad(cases, correct_answers, weights):
+    """cases: [ncases, nfeatures]
+       correct_answers: [ncases]
+       weights: [nfeatures]
+       return pseudo_accuracy_grad: [nfeatures]
+    """
+    margin = get_margin(scores, correct_answers)
+    da_ds = 2 * (correct_answers - 0.5) * np.exp(-margin) / (1 + np.exp(-margin))**2)
+    return np.dot(da_ds, cases) / cases.shape[0]
 
 def get_margin(scores, correct_answers):
     """
@@ -104,7 +112,7 @@ def make_grad_fn(fn):
         x: [n]
         return: [n]
     """
-
+    raise NotImplementedError()
 
 ## ----------------------------------------------------------------------------
 #                                   Main
