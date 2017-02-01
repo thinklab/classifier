@@ -44,6 +44,7 @@ def machine_learning(cases, correct_answers):
            return: [ncases]
     """
     weights = weighter(cases, correct_answers)
+    #print(weights)
     return lambda cases: classifier(cases, weights)
 
 def classifier(cases, weights):
@@ -61,9 +62,14 @@ def weighter(cases, correct_answers):
     """
     weights = np.random.normal(0, 1, [cases.shape[1]])
     #print(weights)
-    for i in range(10):
+    for i in range(1000):
         weights = weights_betterizer(cases, correct_answers, weights)
-        print(weights)
+        predicted_answers = classifier(cases, weights)
+        print("acc - ", accuracy(predicted_answers, correct_answers))
+        #print("pseudo_acc - ", get_pseudo_accuracy(predicted_answers, correct_answers, weights))
+        print("prec - ", precision(predicted_answers, correct_answers))
+        print("recall - ", recall(predicted_answers, correct_answers))
+        print("weig_len - ", np.sqrt(np.sum(weights ** 2)))
     return weights
 
 def weights_betterizer(cases, correct_answers, weights):
@@ -73,7 +79,9 @@ def weights_betterizer(cases, correct_answers, weights):
        return weights: [nfeatures]
     """
     function_for_action_grad = get_pseudo_accuracy_grad(cases, correct_answers, weights)
-    print(function_for_action_grad)
+    #print(function_for_action_grad)
+    print("grad_len - ", np.sqrt(np.sum(function_for_action_grad ** 2)))
+    print("#############")
     return weights + 0.01 * function_for_action_grad
 
 def get_pseudo_accuracy(cases, correct_answers, weights):
@@ -131,12 +139,12 @@ def main():
     cases = np.delete(train_data, 0, 1)    
     cases = np.delete(cases, 0, 1) 
     cases = np.delete(cases, 4, 1)
-    print(cases)    
+    #print(cases)    
     #print(correct_answers)
     new_cases = np.delete(test_data, 0, 1)
     new_cases = np.delete(new_cases, 0, 1)
     new_cases = np.delete(new_cases, 4, 1)
-    print(new_cases)
+    #print(new_cases)
     classifier = machine_learning(cases, correct_answers)
     classifier_answers = classifier(new_cases)
     print(classifier_answers)
