@@ -88,8 +88,9 @@ def get_pseudo_accuracy_grad(cases, correct_answers, weights):
        weights: [nfeatures]
        return pseudo_accuracy_grad: [nfeatures]
     """
+    scores = np.dot(cases, weights)
     margin = get_margin(scores, correct_answers)
-    da_ds = 2 * (correct_answers - 0.5) * np.exp(-margin) / (1 + np.exp(-margin))**2)
+    da_ds = 2 * (correct_answers - 0.5) * np.exp(-margin) / (1 + np.exp(-margin))**2
     return np.dot(da_ds, cases) / cases.shape[0]
 
 def get_margin(scores, correct_answers):
@@ -118,9 +119,14 @@ def make_grad_fn(fn):
 #                                   Main
 
 def main():
-    cases = ...
-    correct_answers = ...
-    new_cases = ...
+    from numpy import genfromtxt
+    train_data = genfromtxt('training.csv', delimiter = ',')
+    test_data = genfromtxt('test.csv', delimiter = ',')
+    cases = np.delete(train_data, 1, 1)    
+    #print(cases)
+    correct_answers = np.array(train_data[:, 1]) 
+    #print(correct_answers)
+    new_cases = np.delete(test_data, 1, 1)
     classifier = machine_learning(cases, correct_answers)
     classifier_answers = classifier(new_cases)
 
