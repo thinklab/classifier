@@ -43,12 +43,10 @@ def machine_learning(cases, correct_answers):
            cases: [ncases, nfeatures]
            return: [ncases]
     """
-    validate_shape('ml:cases', cases, (3000,23))
-    validate_shape('ml:correct_answers', correct_answers, (3000,))
+    #validate_shape('ml:cases', cases, (3000,23))
+    #validate_shape('ml:correct_answers', correct_answers, (3000,))
     weights = weighter(cases, correct_answers)    
-    validate_shape('weights', weights, 23)
-
-    input()
+    #validate_shape('weights', weights, 23)
     return lambda cases: classifier(cases, weights)
 
 def classifier(cases, weights):
@@ -67,17 +65,22 @@ def weighter(cases, correct_answers):
        correct_answers: [ncases]
        return: [nfeatures]
     """
-    validate_shape('w:cases', cases, (3000,23))
-    validate_shape('w:correct_answers', correct_answers, (3000,))
-    weights = np.random.normal(0, 1, [cases.shape[1]])
-    validate_shape('w:weights_initial', weights, (23,))
+    #validate_shape('w:cases', cases, (3000,23))
+    #validate_shape('w:correct_answers', correct_answers, (3000,))
+    weights = np.random.normal(0, 1, [cases.shape[1]]) * 0.0001
+    print(weights)
+    #validate_shape('w:weights_initial', weights, (23,))
     plt.ion()
     for i in range(1000):
+        print("iteration ", i)
+        print("weights######################################################")
+        print(weights)
+        print("/weights#####################################################")        
         weights = weights_betterizer(cases, correct_answers, weights)
-        validate_shape('w:weights_iterate', weights, (23,))
+        #validate_shape('w:weights_iterate', weights, (23,))
         predicted_answers = classifier(cases, weights)
         print("acc - ", accuracy(predicted_answers, correct_answers))
-        print("pseudo_acc - ", get_pseudo_accuracy(predicted_answers, correct_answers, weights))
+        print("pseudo_acc - ", get_pseudo_accuracy(cases, correct_answers, weights))
         print("prec - ", precision(predicted_answers, correct_answers))
         print("recall - ", recall(predicted_answers, correct_answers))
         print("weig_len - ", np.sqrt(np.sum(weights ** 2)))
@@ -91,10 +94,10 @@ def weights_betterizer(cases, correct_answers, weights):
        weights: [nfeatures]
        return weights: [nfeatures]
     """
-    validate_shape('wb:cases', cases, (3000,23))
-    validate_shape('wb:correct_answers', correct_answers, (3000,))
+    #validate_shape('wb:cases', cases, (3000,23))
+    #validate_shape('wb:correct_answers', correct_answers, (3000,))
     function_for_action_grad = get_pseudo_accuracy_grad(cases, correct_answers, weights)
-    validate_shape('wb:function_for_action_grad', function_for_action_grad, (23,))
+    #validate_shape('wb:function_for_action_grad', function_for_action_grad, (23,))
     #print(function_for_action_grad)
     print("grad_len - ", np.sqrt(np.sum(function_for_action_grad ** 2)))
     print("#############")
@@ -106,9 +109,9 @@ def get_pseudo_accuracy(cases, correct_answers, weights):
        weights: [nfeatures]
        return pseudo_accuracy: []
     """
-    validate_shape('gpa:cases', cases, (3000,23))
-    validate_shape('gpa:correct_answers', correct_answers, (3000,))
-    validate_shape('gpa:weights', weights, (23,))
+    #validate_shape('gpa:cases', cases, (3000,23))
+    #validate_shape('gpa:correct_answers', correct_answers, (3000,))
+    #validate_shape('gpa:weights', weights, (23,))
 
     scores = np.dot(cases, weights)
     margin = get_margin(scores, correct_answers)
@@ -121,8 +124,18 @@ def get_pseudo_accuracy_grad(cases, correct_answers, weights):
        return pseudo_accuracy_grad: [nfeatures]
     """
     scores = np.dot(cases, weights)
+    print("scores#################################################### ")
+    print(scores)
     margin = get_margin(scores, correct_answers)
-    da_ds = 2 * (correct_answers - 0.5) * np.exp(-margin) / (1 + np.exp(-margin))**2
+    print(margin.shape)
+    print("margin####################################################")
+    print(margin)
+    print("correct_answers####################################################")
+    print(correct_answers)
+    da_ds = 2 * (correct_answers - 0.5) * np.exp(-margin) / ((1 + np.exp(-margin))**2)
+    print("da_ds#######################################################")
+    print(da_ds)
+    #input()
     return np.dot(da_ds, cases) / cases.shape[0]
 
 def get_margin(scores, correct_answers):
@@ -159,17 +172,17 @@ def main():
     #np.seterr(invalid='ignore')
     from numpy import genfromtxt
     train_data = genfromtxt('ccard_train.csv', delimiter = ',')
-    validate_shape('train_data', train_data, (3000,25))
+    #validate_shape('train_data', train_data, (3000,25))
     test_data = genfromtxt('ccard_dev.csv', delimiter = ',')
-    validate_shape('test_data', test_data, (3000,25))
+    #validate_shape('test_data', test_data, (3000,25))
     correct_answers = np.array(train_data[:,-1])
-    validate_shape('correct_answers', correct_answers, (3000,))
+    #validate_shape('correct_answers', correct_answers, (3000,))
     cases = np.array(train_data[:, 1:-1])    
-    validate_shape('cases', cases, (3000,23))
+    #validate_shape('cases', cases, (3000,23))
     new_cases = np.array(test_data[:, 1:-1])
-    validate_shape('new_cases', new_cases, (3000,23))
-    classifier = machine_learning(cases, correct_answers)
-    classifier_answers = classifier(new_cases)
-    print(classifier_answers)
+    #validate_shape('new_cases', new_cases, (3000,23))
+    #classifier = machine_learning(cases, correct_answers)
+    #classifier_answers = classifier(new_cases)
+    #print(classifier_answers)
 if __name__ == '__main__':
     main()
