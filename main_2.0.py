@@ -67,11 +67,11 @@ def weighter(cases, correct_answers):
     """
     #validate_shape('w:cases', cases, (3000,23))
     #validate_shape('w:correct_answers', correct_answers, (3000,))
-    weights = np.random.normal(0, 1, [cases.shape[1]]) * 0.0001
+    weights = np.random.normal(0, 1, [cases.shape[1]]) * 0.01
     print(weights)
     #validate_shape('w:weights_initial', weights, (23,))
     plt.ion()
-    for i in range(1000):
+    for i in range(1000000):
         print("iteration ", i)
         print("weights######################################################")
         print(weights)
@@ -85,8 +85,26 @@ def weighter(cases, correct_answers):
         print("recall - ", recall(predicted_answers, correct_answers))
         print("weig_len - ", np.sqrt(np.sum(weights ** 2)))
         plt.scatter(i, accuracy(predicted_answers, correct_answers))
+        plt.scatter(i, get_pseudo_accuracy(cases, correct_answers, weights))
         plt.pause(0.05)
     return weights
+
+lr = 0.001
+
+def lr_up(signal, frame):
+    global lr
+    lr = lr * 2**0.25
+    print('LR up; is %f now' % lr)
+
+def lr_down(signal, frame):
+    global lr
+    lr = lr / 2**0.25
+    print('LR down; is %f now' % lr)
+
+import signal
+signal.signal(signal.SIGUSR1, lr_up)
+signal.signal(signal.SIGUSR2, lr_down)
+print()
 
 def weights_betterizer(cases, correct_answers, weights):
     """cases: [ncases, nfeatures]
@@ -101,7 +119,7 @@ def weights_betterizer(cases, correct_answers, weights):
     #print(function_for_action_grad)
     print("grad_len - ", np.sqrt(np.sum(function_for_action_grad ** 2)))
     print("#############")
-    return weights + 0.01 * function_for_action_grad
+    return weights + lr * function_for_action_grad
 
 def get_pseudo_accuracy(cases, correct_answers, weights):
     """cases: [ncases, nfeatures]
@@ -115,7 +133,8 @@ def get_pseudo_accuracy(cases, correct_answers, weights):
 
     scores = np.dot(cases, weights)
     margin = get_margin(scores, correct_answers)
-    return np.mean(1 / (1 + np.exp(-margin)))
+    #return np.mean(1 / (1 + np.exp(-margin)))
+    return np.mean(np.minimum(1, margin))
 
 def get_pseudo_accuracy_grad(cases, correct_answers, weights):
     """cases: [ncases, nfeatures]
@@ -132,7 +151,8 @@ def get_pseudo_accuracy_grad(cases, correct_answers, weights):
     print(margin)
     print("correct_answers####################################################")
     print(correct_answers)
-    da_ds = 2 * (correct_answers - 0.5) * np.exp(-margin) / ((1 + np.exp(-margin))**2)
+    #da_ds = 2 * (correct_answers - 0.5) * np.exp(-margin) / ((1 + np.exp(-margin))**2)
+    da_ds = 2 * (correct_answers - 0.5) * (margin < 1).astype(np.float32)
     print("da_ds#######################################################")
     print(da_ds)
     #input()
@@ -168,20 +188,26 @@ def validate_shape(name, value, expected_shape):
 ## ----------------------------------------------------------------------------
 #                                   Main
 
+def load_from_csv(file):
+    """file: filename
+       return: 
+           features: np.array[ncases, nfeatures]
+           descriptions: list[nfeatures]
+           correct_answers: np.array[ncases]
+    """
+    raw_data = np.genfromtxt(file, delimiter=',', names=True)
+    raw_descriptions = list(raw_data.dtype.names)
+    raw_data = np.array(list(map(list, raw_data)))
+    
+    features = raw_data[:, 1:-1]
+    descriptions = raw_descriptions[1:-1]
+    correct_answers = raw_data[:,-1]  
+    return features, descriptions, correct_answers
+
 def main():
     #np.seterr(invalid='ignore')
-    from numpy import genfromtxt
-    train_data = genfromtxt('ccard_train.csv', delimiter = ',')
-    #validate_shape('train_data', train_data, (3000,25))
-    test_data = genfromtxt('ccard_dev.csv', delimiter = ',')
-    #validate_shape('test_data', test_data, (3000,25))
-    correct_answers = np.array(train_data[:,-1])
-    #validate_shape('correct_answers', correct_answers, (3000,))
-    cases = np.array(train_data[:, 1:-1])    
-    #validate_shape('cases', cases, (3000,23))
-    new_cases = np.array(test_data[:, 1:-1])
-    #validate_shape('new_cases', new_cases, (3000,23))
-    #classifier = machine_learning(cases, correct_answers)
+    features, descriptions, correct_answers = load_from_csv('ccard_preprocessed.csv')   
+    classifier = machine_learning(features, correct_answers)
     #classifier_answers = classifier(new_cases)
     #print(classifier_answers)
 if __name__ == '__main__':
