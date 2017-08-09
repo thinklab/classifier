@@ -185,8 +185,6 @@ def validate_shape(name, value, expected_shape):
     else:
       print('%r: shape %r OK' % (name, value.shape))
 
-## ----------------------------------------------------------------------------
-#                                   Main
 
 def load_from_csv(file):
     """file: filename
@@ -203,6 +201,9 @@ def load_from_csv(file):
     descriptions = raw_descriptions[1:-1]
     correct_answers = raw_data[:,-1]  
     return features, descriptions, correct_answers
+
+## ----------------------------------------------------------------------------
+#                                   Main
 
 def main():
     #np.seterr(invalid='ignore')
