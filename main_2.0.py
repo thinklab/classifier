@@ -60,6 +60,7 @@ def classifier(cases, weights):
 
     return scores > 0
 
+
 def weighter(cases, correct_answers):
     """cases: [ncases, nfeatures]
        correct_answers: [ncases]
@@ -91,20 +92,24 @@ def weighter(cases, correct_answers):
 
 lr = 0.001
 
+
 def lr_up(signal, frame):
     global lr
     lr = lr * 2**0.25
     print('LR up; is %f now' % lr)
+
 
 def lr_down(signal, frame):
     global lr
     lr = lr / 2**0.25
     print('LR down; is %f now' % lr)
 
+
 import signal
 signal.signal(signal.SIGUSR1, lr_up)
 signal.signal(signal.SIGUSR2, lr_down)
 print()
+
 
 def weights_betterizer(cases, correct_answers, weights):
     """cases: [ncases, nfeatures]
@@ -121,6 +126,7 @@ def weights_betterizer(cases, correct_answers, weights):
     print("#############")
     return weights + lr * function_for_action_grad
 
+
 def get_pseudo_accuracy(cases, correct_answers, weights):
     """cases: [ncases, nfeatures]
        correct_answers: [ncases]
@@ -135,6 +141,7 @@ def get_pseudo_accuracy(cases, correct_answers, weights):
     margin = get_margin(scores, correct_answers)
     #return np.mean(1 / (1 + np.exp(-margin)))
     return np.mean(np.minimum(1, margin))
+
 
 def get_pseudo_accuracy_grad(cases, correct_answers, weights):
     """cases: [ncases, nfeatures]
@@ -158,6 +165,7 @@ def get_pseudo_accuracy_grad(cases, correct_answers, weights):
     #input()
     return np.dot(da_ds, cases) / cases.shape[0]
 
+
 def get_margin(scores, correct_answers):
     """
         scores: [ncases]
@@ -165,6 +173,7 @@ def get_margin(scores, correct_answers):
         return margin: [ncases]
     """
     return scores * 2 * (correct_answers - 0.5)
+
 
 def make_grad_fn(fn):
     """
