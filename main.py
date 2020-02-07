@@ -58,8 +58,10 @@ def classify_many(features, threshold, weights):
     scores = get_scores(features, weights)
     return (scores > threshold).astype(int)
 
+
 def get_scores(features, weights):
     return np.dot(features, weights)
+
 
 def total_loss(features, correct_answers, weights):
     return np.sum(hinge_loss(margin(get_scores(features,weights),correct_answers)))
@@ -79,6 +81,7 @@ def train(features, correct_answers):
     num_steps = 100000
     return gradient_minimize(initial_params, fn, fn_grad, alpha, num_steps)         
 
+
 def accuracy(classifier_answers, correct_answers):
     """
     принимает: верные ответы, ответы классификатора
@@ -88,6 +91,7 @@ def accuracy(classifier_answers, correct_answers):
     correct_answers: [nobjects]
     """
     return np.mean(np.equal(classifier_answers, correct_answers))
+
 
 def precision(classifier_answers, correct_answers):
     is_executed = classifier_answers

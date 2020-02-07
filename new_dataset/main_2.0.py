@@ -208,7 +208,7 @@ def main():
     #np.seterr(invalid='ignore')
     features, descriptions, correct_answers = load_from_csv('ccard_preprocessed.csv')   
     classifier = machine_learning(features, correct_answers)
-    #classifier_answers = classifier(new_cases)
-    #print(classifier_answers)
+    classifier_answers = classifier(new_cases)
+    print(classifier_answers)
 if __name__ == '__main__':
     main()
