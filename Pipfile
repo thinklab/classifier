@@ -1,9 +1,14 @@
 [[source]]
 name = "pypi"
+python_version = "3.7"
 url = "https://pypi.org/simple"
 verify_ssl = true
-python_version = "3.7"
 
 [packages]
 numpy = "*"
-jupyter
+jupyter = "*"
+matplotlib = "*"
+pylint = "*"
+
+[dev-packages]
+pylint = "*"

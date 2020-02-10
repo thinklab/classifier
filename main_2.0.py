@@ -37,7 +37,7 @@ def recall(predicted_answers, correct_answers):
 
 
 #
-# ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 #                            The MACHINE LEARNING
 
 def machine_learning(cases, correct_answers):
@@ -76,26 +76,34 @@ def weighter(cases, correct_answers):
     # validate_shape('w:cases', cases, (3000,23))
     # validate_shape('w:correct_answers', correct_answers, (3000,))
     weights = np.random.normal(0, 1, [cases.shape[1]]) * 0.01
-    print(weights)
     # validate_shape('w:weights_initial', weights, (23,))
     plt.ion()
-    for i in range(1000000):
-        print("iteration ", i)
-        print("weights######################################################")
-        print(weights)
-        print("/weights#####################################################")
-        weights = weights_betterizer(cases, correct_answers, weights)
-        # validate_shape('w:weights_iterate', weights, (23,))
-        predicted_answers = classifier(cases, weights)
-        print("acc - ", accuracy(predicted_answers, correct_answers))
-        print("pseudo_acc - ",
-              get_pseudo_accuracy(cases, correct_answers, weights))
-        print("prec - ", precision(predicted_answers, correct_answers))
-        print("recall - ", recall(predicted_answers, correct_answers))
-        print("weig_len - ", np.sqrt(np.sum(weights ** 2)))
-        plt.scatter(i, accuracy(predicted_answers, correct_answers))
-        plt.scatter(i, get_pseudo_accuracy(cases, correct_answers, weights))
-        plt.pause(0.05)
+    import time
+    try:
+        for i in range(1000000):
+            before = time.time()
+            print("iteration ", i)
+            print("weights######################################################")
+            print(weights)
+            print("/weights#####################################################")
+            weights = weights_betterizer(cases, correct_answers, weights)
+            # validate_shape('w:weights_iterate', weights, (23,))
+            predicted_answers = classifier(cases, weights)
+            acc = accuracy(predicted_answers, correct_answers)
+            print("acc - ", acc)
+            pseudo_acc = get_pseudo_accuracy(cases, correct_answers, weights)
+            print("pseudo_acc - ", pseudo_acc)
+            prec = precision(predicted_answers, correct_answers)
+            print("prec - ", prec)
+            print("recall - ", recall(predicted_answers, correct_answers))
+            print("weig_len - ", np.sqrt(np.sum(weights ** 2)))
+            print('calc time {}'.format(time.time() - before))
+            plt.scatter(i, acc)
+            plt.scatter(i, pseudo_acc)
+            plt.pause(0.05)
+    except KeyboardInterrupt as e:
+        print('kek')
+        return weights
     return weights
 
 
@@ -211,31 +219,41 @@ def validate_shape(name, value, expected_shape):
 
 def load_from_csv(file):
     """file: filename
-       return: 
-           features: np.array[ncases, nfeatures]
-           descriptions: list[nfeatures]
-           correct_answers: np.array[ncases]
+       return: features: np.array[ncases, nfeatures]
+               descriptions: list[nfeatures]
+               correct_answers: np.array[ncases]
     """
     raw_data = np.genfromtxt(file, delimiter=',', names=True)
     raw_descriptions = list(raw_data.dtype.names)
     raw_data = np.array(list(map(list, raw_data)))
 
-    features = raw_data[:, 1:-1]
+    raw_features = raw_data[:, 1:-1]
     descriptions = raw_descriptions[1:-1]
-    correct_answers = raw_data[:, -1]
-    return features, descriptions, correct_answers
+    raw_correct_answers = raw_data[:, -1]
+
+    test_dataset_size = int(raw_data.shape[0] * 0.8)
+
+    learn_features = raw_features[:test_dataset_size, :]
+    learn_correct_answers = raw_correct_answers[:test_dataset_size]
+
+    test_features = raw_features[test_dataset_size:, :]
+    test_correct_answers = raw_correct_answers[test_dataset_size:]
+    return learn_features, learn_correct_answers, \
+        test_features, test_correct_answers, descriptions
 
 
-## ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 #                                   Main
 
 def main():
     # np.seterr(invalid='ignore')
-    features, descriptions, correct_answers = load_from_csv(
-        'ccard_preprocessed.csv')
-    classifier = machine_learning(features, correct_answers)
-    # classifier_answers = classifier(new_cases)
-    # print(classifier_answers)
+    learn_features, learn_correct_answers, \
+        test_features, test_correct_answers, descriptions = \
+        load_from_csv('ccard_preprocessed.csv')
+
+    classifier = machine_learning(learn_features, learn_correct_answers)
+    classifier_answers = classifier(test_features)
+    print(classifier_answers, test_correct_answers)
 
 
 if __name__ == '__main__':
