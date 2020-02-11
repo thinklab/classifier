@@ -1,8 +1,22 @@
 #!/usr/bin/env python3
+"""
+    Gradient descent. Sample dataset is here:
 
+    https://archive.ics.uci.edu/ml/datasets/default+of+credit+card+clients
+
+
+"""
+import glob
+import sys
+
+import os
+
+import re
+import signal
 import numpy as np
 import matplotlib.pyplot as plt
 
+DELIMITER = '=' * 80
 #
 # ----------------------------------------------------------------------------
 #                          Quality measurement
@@ -35,10 +49,58 @@ def recall(predicted_answers, correct_answers):
     count_of_spies = np.sum(correct_answers)
     return executed_spies / count_of_spies
 
+#
+# ------------------------------------------------------------------------------
+#                            LEARNING RATE UP DOWN
+# send signal to process pid when running:
+
+
+LR = 0.001
+
+
+def lr_up(signal, frame):
+    """
+    usage: kill -s SIGUSR1 [pid]
+    """
+    global LR  # pylint: disable=W0603
+    LR = LR * 2 ** 0.25
+    print('LR up; is %f now' % LR)
+
+
+def lr_down(signal, frame):
+    """
+    usage: kill -s SIGUSR2 [pid]
+    """
+    global LR  # pylint: disable=W0603
+    LR = LR / 2 ** 0.25
+    print('LR down; is %f now' % LR)
+
+
+signal.signal(signal.SIGUSR1, lr_up)
+signal.signal(signal.SIGUSR2, lr_down)
+print()
 
 #
 # ------------------------------------------------------------------------------
 #                            The MACHINE LEARNING
+
+
+def get_latest_weights_file():
+    """return: filename: str
+       iterations: int
+    """
+
+    def extract_number(name):
+        s_name = re.findall("\d+", name)
+        return int(s_name[0]) if s_name else -1, name
+
+    files = glob.glob('*.*npy')
+    if not files:
+        return None
+    latest_file = max(files, key=extract_number)
+    iterations = extract_number(latest_file)[0]
+    return latest_file, iterations
+
 
 def machine_learning(cases, correct_answers):
     """cases: [ncases, nfeatures]
@@ -61,8 +123,6 @@ def classifier(cases, weights):
        weights: [nfeatures]
        return: [ncases]
     """
-    print("c_shape", cases.shape)
-    print("w_shape", weights.shape)
     scores = np.dot(cases, weights)
 
     return scores > 0
@@ -75,17 +135,26 @@ def weighter(cases, correct_answers):
     """
     # validate_shape('w:cases', cases, (3000,23))
     # validate_shape('w:correct_answers', correct_answers, (3000,))
-    weights = np.random.normal(0, 1, [cases.shape[1]]) * 0.01
-    # validate_shape('w:weights_initial', weights, (23,))
+    weights_file, iterations = get_latest_weights_file()
+    if weights_file:
+        weights = np.load(weights_file)
+        i = iterations
+    else:
+        weights = np.random.normal(0, 1, [cases.shape[1]]) * 0.01
+        i = 0
     plt.ion()
-    import time
+    pid = os.getpid()
     try:
-        for i in range(1000000):
-            before = time.time()
-            print("iteration ", i)
-            print("weights######################################################")
+        for i in range(i, 1000000):
+            print(DELIMITER)
+            print(DELIMITER)
+            print('pid {}'.format(pid))
+            print('iteration ', i)
+            print(DELIMITER)
+            print('weights')
             print(weights)
-            print("/weights#####################################################")
+            print('/weights')
+            print(DELIMITER)
             weights = weights_betterizer(cases, correct_answers, weights)
             # validate_shape('w:weights_iterate', weights, (23,))
             predicted_answers = classifier(cases, weights)
@@ -97,36 +166,17 @@ def weighter(cases, correct_answers):
             print("prec - ", prec)
             print("recall - ", recall(predicted_answers, correct_answers))
             print("weig_len - ", np.sqrt(np.sum(weights ** 2)))
-            print('calc time {}'.format(time.time() - before))
             plt.scatter(i, acc)
             plt.scatter(i, pseudo_acc)
             plt.pause(0.05)
-    except KeyboardInterrupt as e:
-        print('kek')
-        return weights
+    except KeyboardInterrupt:
+        filename = ('weights-{}'.format(i))
+        np.save(filename, arr=weights)
+        print(DELIMITER)
+        print('Saved new weights to {}.npy'.format(filename))
+        print(DELIMITER)
+        sys.exit()
     return weights
-
-
-lr = 0.001
-
-
-def lr_up(signal, frame):
-    global lr
-    lr = lr * 2 ** 0.25
-    print('LR up; is %f now' % lr)
-
-
-def lr_down(signal, frame):
-    global lr
-    lr = lr / 2 ** 0.25
-    print('LR down; is %f now' % lr)
-
-
-import signal
-
-signal.signal(signal.SIGUSR1, lr_up)
-signal.signal(signal.SIGUSR2, lr_down)
-print()
 
 
 def weights_betterizer(cases, correct_answers, weights):
@@ -139,11 +189,12 @@ def weights_betterizer(cases, correct_answers, weights):
     # validate_shape('wb:correct_answers', correct_answers, (3000,))
     function_for_action_grad = get_pseudo_accuracy_grad(cases, correct_answers,
                                                         weights)
-    # validate_shape('wb:function_for_action_grad', function_for_action_grad, (23,))
+    # validate_shape('wb:function_for_action_grad',
+    # function_for_action_grad, (23,))
     # print(function_for_action_grad)
     print("grad_len - ", np.sqrt(np.sum(function_for_action_grad ** 2)))
-    print("#############")
-    return weights + lr * function_for_action_grad
+    print(DELIMITER)
+    return weights + LR * function_for_action_grad
 
 
 def get_pseudo_accuracy(cases, correct_answers, weights):
@@ -169,19 +220,22 @@ def get_pseudo_accuracy_grad(cases, correct_answers, weights):
        return pseudo_accuracy_grad: [nfeatures]
     """
     scores = np.dot(cases, weights)
-    print("scores#################################################### ")
+    print("scores")
     print(scores)
+
     margin = get_margin(scores, correct_answers)
-    print(margin.shape)
-    print("margin####################################################")
+    print("margin")
     print(margin)
-    print("correct_answers####################################################")
+
+    print("correct_answers")
     print(correct_answers)
-    # da_ds = 2 * (correct_answers - 0.5) * np.exp(-margin) / ((1 + np.exp(-margin))**2)
+
+    # da_ds = 2 * (correct_answers - 0.5) * np.exp(-margin) /
+    # ((1 + np.exp(-margin))**2)
     da_ds = 2 * (correct_answers - 0.5) * (margin < 1).astype(np.float32)
-    print("da_ds#######################################################")
+    print("da_ds")
     print(da_ds)
-    # input()
+    print(DELIMITER)
     return np.dot(da_ds, cases) / cases.shape[0]
 
 
@@ -194,7 +248,7 @@ def get_margin(scores, correct_answers):
     return scores * 2 * (correct_answers - 0.5)
 
 
-def make_grad_fn(fn):
+def make_grad_fn(function):
     """
     def fn(x):
         x: [n]
@@ -210,11 +264,15 @@ def make_grad_fn(fn):
 
 
 def validate_shape(name, value, expected_shape):
+    """
+    name: string
+    value: np.array
+    expected_shape: tuple
+    """
     if value.shape != expected_shape:
         raise ValueError('%r: expected shape %r, got shape %r' % (
             name, expected_shape, value.shape))
-    else:
-        print('%r: shape %r OK' % (name, value.shape))
+    print('%r: shape %r OK' % (name, value.shape))
 
 
 def load_from_csv(file):
@@ -231,7 +289,7 @@ def load_from_csv(file):
     descriptions = raw_descriptions[1:-1]
     raw_correct_answers = raw_data[:, -1]
 
-    test_dataset_size = int(raw_data.shape[0] * 0.8)
+    test_dataset_size = int(raw_data.shape[0] * 0.8)  # pylint: disable=E1136
 
     learn_features = raw_features[:test_dataset_size, :]
     learn_correct_answers = raw_correct_answers[:test_dataset_size]
@@ -246,13 +304,16 @@ def load_from_csv(file):
 #                                   Main
 
 def main():
+    """
+    input: preprocessed data for training or previously betterized weights
+    """
     # np.seterr(invalid='ignore')
     learn_features, learn_correct_answers, \
         test_features, test_correct_answers, descriptions = \
         load_from_csv('ccard_preprocessed.csv')
 
-    classifier = machine_learning(learn_features, learn_correct_answers)
-    classifier_answers = classifier(test_features)
+    classifier_ = machine_learning(learn_features, learn_correct_answers)
+    classifier_answers = classifier_(test_features)
     print(classifier_answers, test_correct_answers)
 
 
