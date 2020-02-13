@@ -313,7 +313,7 @@ def main():
     # np.seterr(invalid='ignore')
     learn_features, learn_correct_answers, \
         test_features, test_correct_answers, descriptions = \
-        load_from_csv('ccard_preprocessed.csv')
+        load_from_csv('preprocessing/ccard_preprocessed.csv')
 
     classifier_ = machine_learning(learn_features, learn_correct_answers)
     classifier_answers = classifier_(test_features)

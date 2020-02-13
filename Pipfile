@@ -8,6 +8,7 @@ verify_ssl = true
 numpy = "*"
 jupyter = "*"
 matplotlib = "*"
+sklearn = "*"
 
 [dev-packages]
 pylint = "*"
